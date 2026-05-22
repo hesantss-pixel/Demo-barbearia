@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Barbearia Corte Fino</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    font-family: 'DM Sans', sans-serif;
+    background: #111;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Full screen on mobile, phone frame on desktop */
+  .phone {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  @media (min-width: 480px) {
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .phone {
+      width: 390px;
+      height: 780px;
+      border-radius: 48px;
+      box-shadow: 0 0 0 2px #333, 0 40px 120px rgba(0,0,0,0.8), inset 0 0 0 1px #444;
+    }
+  }
+
+  /* Status bar */
+  .status-bar {
+    background: #075e54;
+    padding: 14px 24px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: white;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* WA Header */
+  .wa-header {
+    background: #075e54;
+    padding: 10px 16px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .back-btn { color: white; font-size: 22px; cursor: pointer; line-height: 1; }
+
+  .avatar {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #1a3a2a, #2d6a4f);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .contact-info { flex: 1; }
+  .contact-name { color: white; font-size: 16px; font-weight: 600; }
+  .contact-status { color: rgba(255,255,255,0.75); font-size: 12px; }
+  .header-icons { display: flex; gap: 20px; color: white; font-size: 20px; }
+
+  /* Chat area */
+  .chat-bg {
+    flex: 1;
+    background-color: #0d1b1e;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(7,94,84,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(37,211,102,0.04) 0%, transparent 50%);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chat-bg::-webkit-scrollbar { width: 0; }
+
+  .date-label { text-align: center; margin: 6px 0; }
+  .date-label span {
+    background: rgba(11,57,51,0.85);
+    color: #a8d5b5;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 10px;
+  }
+
+  .bubble-wrap {
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .bubble-wrap.visible { opacity: 1; transform: translateY(0); }
+  .bubble-wrap.bot { align-items: flex-start; }
+  .bubble-wrap.user { align-items: flex-end; }
+
+  .bubble {
+    max-width: 82%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+    word-break: break-word;
+  }
+
+  .bubble.bot {
+    background: #1e3a34;
+    color: #e8f5e1;
+    border-top-left-radius: 3px;
+    border: 1px solid rgba(37,211,102,0.1);
+  }
+
+  .bubble.user {
+    background: #005c4b;
+    color: #e8f5e1;
+    border-top-right-radius: 3px;
+  }
+
+  .bubble-time {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    text-align: right;
+    margin-top: 2px;
+    padding-right: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+  }
+  .bubble-time .check { color: #53bdeb; font-size: 12px; }
+
+  .quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+    padding-left: 4px;
+  }
+
+  .qr-btn {
+    background: transparent;
+    border: 1px solid #25d366;
+    color: #25d366;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    font-weight: 500;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .qr-btn:active { background: #25d366; color: #0d1b1e; }
+  .qr-btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
+  /* Typing indicator */
+  .typing-wrap {
+    padding: 0 12px 4px;
+    background: #0d1b1e;
+    flex-shrink: 0;
+  }
+
+  .typing {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 14px;
+    background: #1e3a34;
+    border-radius: 12px;
+    border-top-left-radius: 3px;
+    width: fit-content;
+    border: 1px solid rgba(37,211,102,0.1);
+    opacity: 0;
+    transition: opacity 0.2s;
+    min-height: 36px;
+  }
+  .typing.show { opacity: 1; }
+  .typing span {
+    width: 7px; height: 7px;
+    background: #25d366;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%,60%,100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); }
+  }
+
+  /* Input bar */
+  .input-bar {
+    background: #1a1a1a;
+    padding: 10px 12px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid #2a2a2a;
+    flex-shrink: 0;
+  }
+
+  .input-field {
+    flex: 1;
+    background: #2a2a2a;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 16px;
+    color: #e8f5e1;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+  }
+  .input-field::placeholder { color: #666; }
+
+  .send-btn {
+    width: 42px; height: 42px;
+    background: #25d366;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    touch-action: manipulation;
+  }
+
+  .emoji-btn {
+    background: none; border: none; color: #666;
+    font-size: 22px; cursor: pointer; padding: 4px;
+    touch-action: manipulation;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="status-bar">
+    <span id="clockDisplay">17:08</span>
+    <div style="display:flex;gap:6px;align-items:center;font-size:11px">
+      <span>●●●</span><span>WiFi</span><span>🔋</span>
+    </div>
+  </div>
+
+  <div class="wa-header">
+    <div class="back-btn">‹</div>
+    <div class="avatar">✂️</div>
+    <div class="contact-info">
+      <div class="contact-name">Barbearia Corte Fino</div>
+      <div class="contact-status">online</div>
+    </div>
+    <div class="header-icons">
+      <span>📞</span>
+      <span>⋮</span>
+    </div>
+  </div>
+
+  <div class="chat-bg" id="chat">
+    <div class="date-label"><span>Hoje</span></div>
+  </div>
+
+  <div class="typing-wrap">
+    <div class="typing" id="typing">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <button class="emoji-btn">😊</button>
+    <input class="input-field" id="userInput" placeholder="Mensagem" readonly />
+    <button class="send-btn" id="sendBtn">➤</button>
+  </div>
+</div>
+
+<script>
+// Live clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockDisplay').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+const chat = document.getElementById('chat');
+const typing = document.getElementById('typing');
+const userInput = document.getElementById('userInput');
+
+function getTime() {
+  const now = new Date();
+  return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+function addBubble(text, type, quickReplies = []) {
+  const wrap = document.createElement('div');
+  wrap.className = `bubble-wrap ${type}`;
+
+  const bubble = document.createElement('div');
+  bubble.className = `bubble ${type}`;
+  bubble.innerHTML = text;
+
+  const timeDiv = document.createElement('div');
+  timeDiv.className = 'bubble-time';
+  if (type === 'user') {
+    timeDiv.innerHTML = `${getTime()} <span class="check">✓✓</span>`;
+  } else {
+    timeDiv.textContent = getTime();
+  }
+  bubble.appendChild(timeDiv);
+  wrap.appendChild(bubble);
+
+  if (quickReplies.length > 0) {
+    const qrDiv = document.createElement('div');
+    qrDiv.className = 'quick-replies';
+    quickReplies.forEach(qr => {
+      const btn = document.createElement('button');
+      btn.className = 'qr-btn';
+      btn.textContent = qr.label;
+      btn.onclick = () => handleQR(qr);
+      qrDiv.appendChild(btn);
+    });
+    wrap.appendChild(qrDiv);
+  }
+
+  chat.appendChild(wrap);
+  setTimeout(() => wrap.classList.add('visible'), 50);
+  chat.scrollTop = chat.scrollHeight;
+  return wrap;
+}
+
+function showTyping() {
+  typing.classList.add('show');
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTyping() {
+  typing.classList.remove('show');
+}
+
+function disableAllQR() {
+  document.querySelectorAll('.qr-btn').forEach(b => b.disabled = true);
+}
+
+let step = 0;
+let selectedService = '';
+let selectedBarber = '';
+let selectedDay = '';
+
+const flow = [
+  async () => {
+    showTyping();
+    await delay(1500);
+    hideTyping();
+    addBubble(`✂️ Olá! Bem-vindo à <b>Barbearia Corte Fino</b>!<br><br>Sou o assistente virtual da barbearia. Como posso te ajudar hoje?`, 'bot', [
+      { label: '📅 Agendar horário', action: 'agendar' },
+      { label: '💈 Ver serviços', action: 'servicos' },
+      { label: '📍 Endereço e horários', action: 'endereco' },
+    ]);
+  },
+
+  async (action) => {
+    disableAllQR();
+    if (action === 'servicos') {
+      showUserMsg('💈 Ver serviços');
+      showTyping(); await delay(1200); hideTyping();
+      addBubble(`💈 <b>Nossos serviços:</b><br><br>• Corte masculino — R$ 45<br>• Barba — R$ 30<br>• Corte + Barba — R$ 65<br>• Pezinho / acabamento — R$ 25<br>• Hidratação capilar — R$ 40<br><br>Quer agendar algum serviço?`, 'bot', [
+        { label: '✅ Sim, quero agendar!', action: 'agendar' },
+        { label: '🔙 Voltar', action: 'voltar' },
+      ]);
+    } else if (action === 'endereco') {
+      showUserMsg('📍 Endereço e horários');
+      showTyping(); await delay(1000); hideTyping();
+      addBubble(`📍 <b>Nossa localização:</b><br>Rua das Tesouras, 142 — Centro<br><br>⏰ <b>Horários de funcionamento:</b><br>Seg–Sex: 9h às 20h<br>Sábado: 8h às 18h<br>Domingo: fechado<br><br>Quer agendar um horário?`, 'bot', [
+        { label: '✅ Quero agendar!', action: 'agendar' },
+        { label: '🔙 Voltar', action: 'voltar' },
+      ]);
+    } else {
+      showUserMsg('📅 Agendar horário');
+      goToStep(2);
+    }
+  },
+
+  async () => {
+    showTyping(); await delay(1200); hideTyping();
+    addBubble(`Ótimo! Qual serviço você deseja? 💈`, 'bot', [
+      { label: 'Corte — R$45', action: 'corte' },
+      { label: 'Barba — R$30', action: 'barba' },
+      { label: 'Corte + Barba — R$65', action: 'combo' },
+      { label: 'Pezinho — R$25', action: 'pezinho' },
+    ]);
+  },
+
+  async (action) => {
+    disableAllQR();
+    const map = { corte: 'Corte — R$45', barba: 'Barba — R$30', combo: 'Corte + Barba — R$65', pezinho: 'Pezinho — R$25' };
+    selectedService = map[action];
+    showUserMsg(selectedService);
+    showTyping(); await delay(1300); hideTyping();
+    addBubble(`Perfeito! 👌 Com qual barbeiro você prefere?`, 'bot', [
+      { label: '✂️ João', action: 'joao' },
+      { label: '✂️ Rafael', action: 'rafael' },
+      { label: '😊 Sem preferência', action: 'qualquer' },
+    ]);
+  },
+
+  async (action) => {
+    disableAllQR();
+    const map = { joao: 'João', rafael: 'Rafael', qualquer: 'Sem preferência' };
+    selectedBarber = map[action];
+    showUserMsg(action === 'qualquer' ? '😊 Sem preferência' : `✂️ ${map[action]}`);
+    showTyping(); await delay(1200); hideTyping();
+    addBubble(`Que dia você prefere?`, 'bot', [
+      { label: 'Segunda (26/05)', action: 'seg' },
+      { label: 'Terça (27/05)', action: 'ter' },
+      { label: 'Quarta (28/05)', action: 'qua' },
+      { label: 'Quinta (29/05)', action: 'qui' },
+    ]);
+  },
+
+  async (action) => {
+    disableAllQR();
+    const map = { seg: 'Segunda (26/05)', ter: 'Terça (27/05)', qua: 'Quarta (28/05)', qui: 'Quinta (29/05)' };
+    selectedDay = map[action];
+    showUserMsg(selectedDay);
+    showTyping(); await delay(1200); hideTyping();
+    addBubble(`Horários disponíveis para <b>${selectedDay}</b> 📅`, 'bot', [
+      { label: '09:00', action: 't0900' },
+      { label: '10:30', action: 't1030' },
+      { label: '14:00', action: 't1400' },
+      { label: '16:30', action: 't1630' },
+    ]);
+  },
+
+  async (action) => {
+    disableAllQR();
+    const timeMap = { t0900: '09:00', t1030: '10:30', t1400: '14:00', t1630: '16:30' };
+    const selectedTime = timeMap[action];
+    showUserMsg(selectedTime);
+    showTyping(); await delay(1500); hideTyping();
+    const barberText = selectedBarber === 'Sem preferência' ? 'Primeiro disponível' : selectedBarber;
+    addBubble(`✅ <b>Confirma seu agendamento?</b><br><br>📋 Serviço: ${selectedService}<br>✂️ Barbeiro: ${barberText}<br>📅 Data: ${selectedDay}<br>⏰ Horário: ${selectedTime}<br><br>Está tudo certo?`, 'bot', [
+      { label: '✅ Confirmar!', action: 'confirmar' },
+      { label: '✏️ Alterar', action: 'alterar' },
+    ]);
+  },
+
+  async (action) => {
+    disableAllQR();
+    if (action === 'alterar') {
+      showUserMsg('✏️ Alterar');
+      showTyping(); await delay(800); hideTyping();
+      addBubble(`Sem problema! Vou te levar de volta. 😊`, 'bot');
+      await delay(1000);
+      goToStep(2);
+      return;
+    }
+    showUserMsg('✅ Confirmar!');
+    showTyping(); await delay(1000); hideTyping();
+    addBubble(`Ótimo! Para finalizar, qual é o seu nome? 😊`, 'bot');
+    enableInput(async (nome) => {
+      showTyping(); await delay(1400); hideTyping();
+      addBubble(`🎉 <b>Agendamento confirmado, ${nome}!</b><br><br>Você receberá uma confirmação em breve. Te esperamos na barbearia! ✂️💈`, 'bot', [
+        { label: '🏠 Menu inicial', action: 'inicio' },
+      ]);
+    });
+  },
+
+  async () => {
+    disableAllQR();
+    showTyping(); await delay(800); hideTyping();
+    goToStep(0);
+  }
+];
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function showUserMsg(text) { addBubble(text, 'user'); }
+
+function handleQR(qr) {
+  if (qr.action === 'voltar' || qr.action === 'inicio') {
+    disableAllQR();
+    goToStep(0);
+    return;
+  }
+  step++;
+  flow[step](qr.action);
+}
+
+function goToStep(s) {
+  step = s;
+  flow[s]();
+}
+
+function enableInput(cb) {
+  userInput.readOnly = false;
+  userInput.placeholder = 'Digite seu nome...';
+  userInput.focus();
+
+  const send = () => {
+    const val = userInput.value.trim();
+    if (!val) return;
+    showUserMsg(val);
+    userInput.value = '';
+    userInput.readOnly = true;
+    userInput.placeholder = 'Mensagem';
+    document.getElementById('sendBtn').removeEventListener('click', send);
+    userInput.removeEventListener('keypress', keyHandler);
+    cb(val);
+  };
+
+  const keyHandler = (e) => { if (e.key === 'Enter') send(); };
+  document.getElementById('sendBtn').addEventListener('click', send);
+  userInput.addEventListener('keypress', keyHandler);
+}
+
+goToStep(0);
+</script>
+</body>
+</html>
